@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import CitaForm from './components/CitaForm';
 import CitaList from './components/CitaList';
-import EditCitaFormModal from './components/EditCitaFormModal'; 
+import EditCitaFormModal from './components/EditCitaFormModal';
+
+const API = import.meta.env.VITE_API_URL; 
+// En local puede usar .env.local con VITE_API_URL=http://localhost:5000/api
 
 function App() {
   const [citas, setCitas] = useState([]);
@@ -10,8 +13,8 @@ function App() {
 
   const obtenerCitas = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/citas');
-      const data = await response.json();
+      const res = await fetch(`${API}/citas`);
+      const data = await res.json();
       setCitas(data);
     } catch (error) {
       console.error('Error al obtener las citas:', error);
@@ -20,12 +23,12 @@ function App() {
 
   const agregarCita = async (cita) => {
     try {
-      const response = await fetch('http://localhost:5000/api/citas', {
+      const res = await fetch(`${API}/citas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cita),
       });
-      if (response.ok) {
+      if (res.ok) {
         obtenerCitas();
         setMostrarModal(false);
       }
@@ -36,10 +39,8 @@ function App() {
 
   const eliminarCita = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/citas/${id}`, {
-        method: 'DELETE',
-      });
-      setCitas(citas.filter((cita) => cita._id !== id));
+      await fetch(`${API}/citas/${id}`, { method: 'DELETE' });
+      setCitas(citas.filter(c => c._id !== id));
     } catch (error) {
       console.error('Error al eliminar cita:', error);
     }
@@ -52,12 +53,12 @@ function App() {
 
   const actualizarCita = async (citaActualizada) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/citas/${citaActualizada._id}`, {
+      const res = await fetch(`${API}/citas/${citaActualizada._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(citaActualizada),
       });
-      if (response.ok) {
+      if (res.ok) {
         obtenerCitas();
         setMostrarModal(false);
         setCitaSeleccionada(null);
@@ -73,49 +74,37 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
-      <h1 className="text-3xl font-bold text-center mb-6 text-blue-700">Gestor de Citas Médicas</h1>
+      <h1 className="text-3xl font-bold text-center mb-6 text-blue-700">
+        Gestor de Citas Médicas
+      </h1>
 
       <div className="flex justify-center mb-6">
         <button
-          onClick={() => {
-            setCitaSeleccionada(null);
-            setMostrarModal(true);
-          }}
+          onClick={() => { setCitaSeleccionada(null); setMostrarModal(true); }}
           className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow"
         >
           Agregar Cita
         </button>
       </div>
 
-      <CitaList
-        citas={citas}
-        onEliminar={eliminarCita}
-        onEditar={editarCita}
-      />
+      <CitaList citas={citas} onEliminar={eliminarCita} onEditar={editarCita} />
 
       {mostrarModal && (
         <div className="fixed inset-0 flex items-center justify-center backdrop-blur bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-xl relative">
             <button
-              onClick={() => {
-                setMostrarModal(false);
-                setCitaSeleccionada(null);
-              }}
+              onClick={() => { setMostrarModal(false); setCitaSeleccionada(null); }}
               className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
             >
               &times;
             </button>
 
-            
             {citaSeleccionada === null ? (
               <CitaForm agregarCita={agregarCita} />
             ) : (
               <EditCitaFormModal
                 cita={citaSeleccionada}
-                onClose={() => {
-                  setMostrarModal(false);
-                  setCitaSeleccionada(null);
-                }}
+                onClose={() => { setMostrarModal(false); setCitaSeleccionada(null); }}
                 onUpdate={actualizarCita}
               />
             )}
